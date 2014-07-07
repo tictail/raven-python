@@ -12,7 +12,8 @@ import time
 import raven
 from raven.base import Client
 from raven.utils import get_auth_header
-from tornado.httpclient import AsyncHTTPClient, HTTPError
+from tornado import web
+from tornado import httpclient
 
 
 class AsyncSentryClient(Client):
@@ -84,7 +85,7 @@ class AsyncSentryClient(Client):
             self._send_remote(
                 url=url, data=data, headers=headers, callback=callback
             )
-        except HTTPError as e:
+        except httpclient.HTTPError as e:
             body = e.response.body
             self.error_logger.error(
                 'Unable to reach Sentry log server: %s '
@@ -112,7 +113,7 @@ class AsyncSentryClient(Client):
         if headers is None:
             headers = {}
 
-        return AsyncHTTPClient().fetch(
+        return httpclient.AsyncHTTPClient().fetch(
             url, callback, method="POST", body=data, headers=headers
         )
 
@@ -249,7 +250,7 @@ class SentryMixin(object):
         log_exception() is added in Tornado v3.1.
         """
         rv = super(SentryMixin, self).log_exception(typ, value, tb)
-        if isinstance(value, HTTPError) and value.status_code < 500:
+        if isinstance(value, web.HTTPError) and value.status_code < 500:
             return rv
         self.captureException(exc_info=(typ, value, tb))
         return rv
