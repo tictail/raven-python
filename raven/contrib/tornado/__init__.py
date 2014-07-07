@@ -249,8 +249,9 @@ class SentryMixin(object):
         log_exception() is added in Tornado v3.1.
         """
         rv = super(SentryMixin, self).log_exception(typ, value, tb)
-        if isinstance(value, HTTPError) and 500 <= value.status_code <= 599:
-            self.captureException(exc_info=(typ, value, tb))
+        if isinstance(value, HTTPError) and value.status_code < 500:
+            return rv
+        self.captureException(exc_info=(typ, value, tb))
         return rv
 
     def send_error(self, status_code=500, **kwargs):
